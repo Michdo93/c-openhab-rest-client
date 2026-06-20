@@ -65,68 +65,68 @@ int main(void) {
 
     /* ── System ─────────────────────────────────────────────────────────── */
     printf(BOLD "── System ──────────────────────────────────────────────\n" RESET);
-    print_result("getUUID",       openhab_uuid_get(c), c);
-    print_result("getSystemInfo", openhab_systeminfo_get(c), c);
-    print_result("getUoMInfo",    openhab_systeminfo_uom(c), c);
+    print_result("getUUID",       openhab_uuid_getUUID(c), c);
+    print_result("getSystemInfo", openhab_systeminfo_getSystemInfo(c), c);
+    print_result("getUoMInfo",    openhab_systeminfo_getUoMInfo(c), c);
 
     /* ── Items ──────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Items ───────────────────────────────────────────────\n" RESET);
-    print_result("getItems",      openhab_items_get_all(c,NULL,NULL,NULL,0,NULL,0,NULL), c);
-    print_result("getItem",       openhab_items_get(c, TEST_ITEM, NULL, 1, NULL), c);
-    print_result("getItemState",  openhab_items_get_state(c, TEST_ITEM), c);
-    print_result("sendCommand ON", openhab_items_send_command(c, TEST_ITEM, "ON"), c);
-    print_result("sendCommand OFF",openhab_items_send_command(c, TEST_ITEM, "OFF"), c);
-    print_result("getMetadataNS", openhab_items_get_metadata_namespaces(c, TEST_ITEM, NULL), c);
+    print_result("getItems",      openhab_items_getItems(c,NULL,NULL,NULL,0,NULL,0,NULL), c);
+    print_result("getItem",       openhab_items_getItem(c, TEST_ITEM, NULL, 1, NULL), c);
+    print_result("getItemState",  openhab_items_getItemState(c, TEST_ITEM), c);
+    print_result("sendCommand ON", openhab_items_sendCommand(c, TEST_ITEM, "ON"), c);
+    print_result("sendCommand OFF",openhab_items_sendCommand(c, TEST_ITEM, "OFF"), c);
+    print_result("getMetadataNS", openhab_items_getMetadataNamespaces(c, TEST_ITEM, NULL), c);
 
     /* ── Things ─────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Things ──────────────────────────────────────────────\n" RESET);
-    print_result("getThings",     openhab_things_get_all(c, 0, 0, NULL), c);
+    print_result("getThings",     openhab_things_getThings(c, 0, 0, NULL), c);
 
     /* ── Rules ──────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Rules ───────────────────────────────────────────────\n" RESET);
-    print_result("getRules",      openhab_rules_get_all(c, NULL, NULL, 0, 0), c);
+    print_result("getRules",      openhab_rules_getRules(c, NULL, NULL, 0, 0), c);
 
     /* ── Audio ──────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Audio ───────────────────────────────────────────────\n" RESET);
-    print_result("getDefaultSink",   openhab_audio_get_default_sink(c), c);
-    print_result("getDefaultSource", openhab_audio_get_default_source(c), c);
-    print_result("getSinks",         openhab_audio_get_sinks(c), c);
-    print_result("getSources",       openhab_audio_get_sources(c), c);
+    print_result("getDefaultSink",   openhab_audio_getDefaultSink(c), c);
+    print_result("getDefaultSource", openhab_audio_getDefaultSource(c), c);
+    print_result("getSinks",         openhab_audio_getSinks(c), c);
+    print_result("getSources",       openhab_audio_getSources(c), c);
 
     /* ── Sitemaps ────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Sitemaps ────────────────────────────────────────────\n" RESET);
-    print_result("getSitemaps",   openhab_sitemaps_get_all(c), c);
+    print_result("getSitemaps",   openhab_sitemaps_getSitemaps(c), c);
 
     /* ── Tags ───────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Tags ────────────────────────────────────────────────\n" RESET);
-    print_result("getTags",       openhab_tags_get_all(c, NULL, NULL), c);
+    print_result("getTags",       openhab_tags_getTags(c, NULL, NULL), c);
 
     /* ── Templates / ModuleTypes / ProfileTypes ─────────────────────────── */
     printf(BOLD "\n── Automation ──────────────────────────────────────────\n" RESET);
-    print_result("getTemplates",    openhab_templates_get_all(c, NULL), c);
-    print_result("getModuleTypes",  openhab_module_types_get_all(c, NULL, NULL), c);
-    print_result("getProfileTypes", openhab_profile_types_get_all(c, NULL, NULL, NULL), c);
+    print_result("getTemplates",    openhab_templates_getTemplates(c, NULL), c);
+    print_result("getModuleTypes",  openhab_module_types_getModuleTypes(c, NULL, NULL), c);
+    print_result("getProfileTypes", openhab_profile_types_getProfileTypes(c, NULL, NULL, NULL), c);
 
     /* ── UI ─────────────────────────────────────────────────────────────── */
     printf(BOLD "\n── UI ──────────────────────────────────────────────────\n" RESET);
-    print_result("getUITiles",    openhab_ui_get_tiles(c), c);
+    print_result("getUITiles",    openhab_ui_getUITiles(c), c);
 
     /* ── Iconsets ───────────────────────────────────────────────────────── */
     printf(BOLD "\n── Misc ────────────────────────────────────────────────\n" RESET);
-    print_result("getIconsets",    openhab_iconsets_get_all(c, NULL), c);
-    print_result("getThingTypes",  openhab_thing_types_get_all(c, NULL, NULL), c);
-    print_result("getChannelTypes",openhab_channel_types_get_all(c, NULL, NULL), c);
+    print_result("getIconsets",    openhab_iconsets_getIconsets(c, NULL), c);
+    print_result("getThingTypes",  openhab_thing_types_getThingTypes(c, NULL, NULL), c);
+    print_result("getChannelTypes",openhab_channel_types_getChannelTypes(c, NULL, NULL), c);
 
     /* ── Voice ──────────────────────────────────────────────────────────── */
     printf(BOLD "\n── Voice ───────────────────────────────────────────────\n" RESET);
-    print_result("getVoices",       openhab_voice_get_voices(c), c);
-    print_result("getInterpreters", openhab_voice_get_interpreters(c, NULL), c);
+    print_result("getVoices",       openhab_voice_getVoices(c), c);
+    print_result("getInterpreters", openhab_voice_getInterpreters(c, NULL), c);
 
     /* ── SSE (brief, 3 events max) ──────────────────────────────────────── */
     printf(BOLD "\n── SSE (max 3 events, dann Stop) ───────────────────────\n" RESET);
     int count = 0;
     printf("  Lausche auf openhab/items/* …\n");
-    openhab_events_item_state_changed(c, NULL, sse_cb, &count);
+    openhab_events_getItemStateChangedEvent(c, NULL, sse_cb, &count);
     printf("  %d SSE-Events empfangen.\n", count);
 
     /* ── Summary ────────────────────────────────────────────────────────── */
