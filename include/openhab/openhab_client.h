@@ -1,11 +1,22 @@
+/*
+ * c-openhab-rest-client – client, JSON helpers and Server-Sent Events.
+ *
+ * Every REST function of this library (openhab_api.h) returns a cJSON value that
+ * the caller owns and frees with cJSON_Delete():
+ *   - JSON responses as cJSON object or array,
+ *   - text responses (e.g. an item state) as cJSON string,
+ *   - errors as object {"error": "..."} and empty successes as {"message": "OK"} –
+ *     exactly like python-openhab-rest-client.
+ */
 #ifndef OPENHAB_CLIENT_H
 #define OPENHAB_CLIENT_H
+
+#include <stddef.h>
+#include <cjson/cJSON.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stddef.h>
 
 /* ── Export macros ─────────────────────────────────────────────────────────── */
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -24,121 +35,157 @@ extern "C" {
 #  endif
 #endif
 
-/* ── openhab_client_t ──────────────────────────────────────────────────────── */
+#define OPENHAB_CLIENT_VERSION "2.0.0"
 
-/**
- * Opaque client handle.
- * Create with openhab_client_create(), destroy with openhab_client_destroy().
- */
+/* Default timeout for normal requests in seconds (Python: DEFAULT_TIMEOUT). */
+#define OPENHAB_DEFAULT_TIMEOUT 10.0
+/* Timeout for opening an event stream in seconds (Python: SSE_CONNECT_TIMEOUT). */
+#define OPENHAB_SSE_CONNECT_TIMEOUT 10.0
+
+/* Optional boolean argument: OPENHAB_UNSET (0) keeps the default of the Python library. */
+typedef enum { OPENHAB_UNSET = 0, OPENHAB_TRUE = 1, OPENHAB_FALSE = 2 } openhab_flag;
+
+/* ── Client ────────────────────────────────────────────────────────────────── */
+
+/** Opaque client handle. Thread-safe: every request uses its own connection. */
 typedef struct openhab_client openhab_client_t;
 
-/**
- * Create a new client.
- *
- * @param url       Base URL, e.g. "https://myopenhab.org" or "http://127.0.0.1:8080"
- * @param username  Basic-Auth username, or NULL for token auth
- * @param password  Basic-Auth password, or NULL for token auth
- * @param token     Bearer token, or NULL for Basic auth
- * @return          Heap-allocated client, or NULL on failure.
- */
-OPENHAB_API openhab_client_t* openhab_client_create(
-    const char* url,
-    const char* username,
-    const char* password,
-    const char* token);
+/** Optional arguments of openhab_client_new(). */
+typedef struct {
+    int _;                  /* reserved, keeps the struct non-empty */
+    const char* username;   /* Basic Authentication (also myopenHAB) */
+    const char* password;
+    const char* token;      /* API token (Bearer) – takes precedence */
+    double timeout;         /* seconds for normal requests, 0 = OPENHAB_DEFAULT_TIMEOUT */
+    openhab_flag verify;    /* TLS certificate check, default: on */
+} openhab_client_args;
 
-/** Free all resources associated with the client. */
+/**
+ * Creates a client and checks whether openHAB is reachable (like the Python constructor).
+ *
+ *   openhab_client_t* c = openhab_client_new("http://127.0.0.1:8080", .token = token);
+ *
+ * Returns NULL only if memory runs out. Free with openhab_client_destroy().
+ */
+#define openhab_client_new(url, ...) \
+    openhab_client_new_((url), (openhab_client_args){ ._ = 0, __VA_ARGS__ })
+OPENHAB_API openhab_client_t* openhab_client_new_(const char* url, openhab_client_args args);
+
+/** Version 1.x constructor, kept for compatibility. */
+OPENHAB_API openhab_client_t* openhab_client_create(const char* url, const char* username,
+                                                    const char* password, const char* token);
+
+/** Frees the client (Python: close()). */
 OPENHAB_API void openhab_client_destroy(openhab_client_t* client);
 
-/** Returns 1 if the last login/connectivity check succeeded. */
+/** Repeats the reachability check of the constructor; returns isLoggedIn. */
+OPENHAB_API int openhab_client_login(openhab_client_t* client);
+
+/** 1 if openHAB was reachable and accepted the credentials (Python: isLoggedIn). */
 OPENHAB_API int openhab_client_is_logged_in(const openhab_client_t* client);
 
-/** Returns 1 if the server URL contains "myopenhab.org". */
+/** 1 for myopenHAB (Python: isCloud). */
 OPENHAB_API int openhab_client_is_cloud(const openhab_client_t* client);
 
-/** Returns the base URL (owned by the client, do not free). */
+/** Base URL without trailing slash (owned by the client). */
 OPENHAB_API const char* openhab_client_base_url(const openhab_client_t* client);
 
-/* ── HTTP helpers ──────────────────────────────────────────────────────────── */
+/** Why the last login failed, or NULL (owned by the client). */
+OPENHAB_API const char* openhab_client_last_error(const openhab_client_t* client);
+
+/* ── Low-level requests (Python: client.get/post/put/delete) ──────────────── */
 
 /**
- * Perform a GET request.
+ * Sends a request to a resource path ("/items", "/rest/items" or a full URL).
+ * headers and params are cJSON objects or NULL; data is a cJSON value or NULL
+ * (strings are sent as they are, everything else as JSON).
  *
- * @param client     Client handle.
- * @param endpoint   REST path, e.g. "/items" or "/rest/items".
- * @param accept     Accept header value, e.g. "application/json". May be NULL.
- * @param query      URL-encoded query string without '?', e.g. "type=Switch". May be NULL.
- * @return           Heap-allocated response body (caller must free()), or NULL on error.
+ * Returns the decoded JSON, the text as cJSON string, or for empty bodies the
+ * StatusResponse {"status": 200[, "location": ...]}. HTTP errors (4xx/5xx) and
+ * connection errors return {"error": "..."}.
  */
-OPENHAB_API char* openhab_get(
-    openhab_client_t* client,
-    const char* endpoint,
-    const char* accept,
-    const char* query);
+OPENHAB_API cJSON* openhab_client_get(openhab_client_t* client, const char* endpoint,
+                                      const cJSON* headers, const cJSON* params);
+OPENHAB_API cJSON* openhab_client_post(openhab_client_t* client, const char* endpoint,
+                                       const cJSON* headers, const cJSON* data,
+                                       const cJSON* params);
+OPENHAB_API cJSON* openhab_client_put(openhab_client_t* client, const char* endpoint,
+                                      const cJSON* headers, const cJSON* data,
+                                      const cJSON* params);
+OPENHAB_API cJSON* openhab_client_delete(openhab_client_t* client, const char* endpoint,
+                                         const cJSON* headers, const cJSON* data,
+                                         const cJSON* params);
+
+/* ── Results ───────────────────────────────────────────────────────────────── */
+
+/** 1 if result is an error object {"error": ...} (or NULL). */
+OPENHAB_API int openhab_is_error(const cJSON* result);
+
+/** The error message of an error object, otherwise NULL (owned by result). */
+OPENHAB_API const char* openhab_error(const cJSON* result);
+
+/** 1 if result is a StatusResponse (empty answer with HTTP status). */
+OPENHAB_API int openhab_is_status(const cJSON* result);
 
 /**
- * Perform a POST request.
- *
- * @param body       Request body. May be NULL.
- * @param content_type  Content-Type header. May be NULL (defaults to "application/json").
- * @return           Heap-allocated response body (caller must free()), or NULL on error.
+ * Walks a path through objects and arrays: "payload.value", "0.label",
+ * "members.2.name" (numbers index arrays). Returns NULL if a part is missing.
  */
-OPENHAB_API char* openhab_post(
-    openhab_client_t* client,
-    const char* endpoint,
-    const char* body,
-    const char* content_type);
+OPENHAB_API cJSON* openhab_json_get(const cJSON* value, const char* path);
+
+/** String at path (NULL if missing or not a string). Owned by value. */
+OPENHAB_API const char* openhab_json_str(const cJSON* value, const char* path);
+
+/** Number at path, or fallback. */
+OPENHAB_API double openhab_json_num(const cJSON* value, const char* path, double fallback);
+
+/** Compact JSON text of a value; free with openhab_free(). */
+OPENHAB_API char* openhab_json_print(const cJSON* value);
+
+/** Frees strings returned by this library. */
+OPENHAB_API void openhab_free(void* p);
+
+/* ── Server-Sent Events ────────────────────────────────────────────────────── */
+
+/** An open event stream (returned by the *Events functions). */
+typedef struct openhab_sse openhab_sse_t;
 
 /**
- * Perform a PUT request.
+ * Next event with decoded payload – Python: next(iterSSEEvents(stream)).
+ * Waits at most timeout_ms milliseconds (-1 = no limit). Returns NULL on timeout,
+ * at the end of the stream, after openhab_sse_interrupt() and on errors;
+ * openhab_sse_is_open() tells whether more can come. Free the event with cJSON_Delete().
+ * ALIVE messages ({"type": "ALIVE"}) are only returned with include_alive = 1.
  */
-OPENHAB_API char* openhab_put(
-    openhab_client_t* client,
-    const char* endpoint,
-    const char* body,
-    const char* content_type);
+OPENHAB_API cJSON* openhab_sse_next_event(openhab_sse_t* stream, int timeout_ms,
+                                          int include_alive);
+
+/** Next raw line of the stream (Python: iterSSELines); free with openhab_free(). */
+OPENHAB_API char* openhab_sse_next_line(openhab_sse_t* stream, int timeout_ms);
+
+/** Decodes one "data:" line (Python: parseSSEData); NULL for other lines. */
+OPENHAB_API cJSON* openhab_sse_parse_data(const char* line);
+
+/** 1 while the stream is connected and not interrupted. */
+OPENHAB_API int openhab_sse_is_open(const openhab_sse_t* stream);
+
+/** 1 if the stream could not be opened (or failed later). */
+OPENHAB_API int openhab_sse_is_error(const openhab_sse_t* stream);
+
+/** Error message, or NULL (owned by the stream). */
+OPENHAB_API const char* openhab_sse_error(const openhab_sse_t* stream);
+
+/** The error as result object {"error": ...} or NULL; free with cJSON_Delete(). */
+OPENHAB_API cJSON* openhab_sse_error_result(const openhab_sse_t* stream);
 
 /**
- * Perform a DELETE request.
+ * Wakes up a waiting openhab_sse_next_*() and ends the stream. Safe to call from
+ * another thread or a signal handler.
  */
-OPENHAB_API char* openhab_delete(
-    openhab_client_t* client,
-    const char* endpoint);
+OPENHAB_API void openhab_sse_interrupt(openhab_sse_t* stream);
 
-/* ── Last error ────────────────────────────────────────────────────────────── */
-
-/**
- * Returns a human-readable description of the last error, or NULL.
- * The string is owned by the client; do not free it.
- */
-OPENHAB_API const char* openhab_last_error(const openhab_client_t* client);
-
-/** Returns the HTTP status code of the last request, or 0. */
-OPENHAB_API int openhab_last_status(const openhab_client_t* client);
-
-/* ── SSE ───────────────────────────────────────────────────────────────────── */
-
-/**
- * SSE event callback.
- * Called for each "data: ..." line received from the stream.
- * Return 1 to continue, 0 to stop.
- */
-typedef int (*openhab_sse_callback_t)(const char* data, void* userdata);
-
-/**
- * Open a Server-Sent Events stream.
- * Blocks until the stream ends or the callback returns 0.
- *
- * @param client    Client handle.
- * @param url       Full SSE URL, e.g. client's baseUrl + "/rest/events".
- * @param callback  Called for each event.
- * @param userdata  Passed through to every callback invocation.
- */
-OPENHAB_API void openhab_sse_listen(
-    openhab_client_t* client,
-    const char* url,
-    openhab_sse_callback_t callback,
-    void* userdata);
+/** Closes the connection and frees the stream (NULL is ignored). */
+OPENHAB_API void openhab_sse_close(openhab_sse_t* stream);
 
 #ifdef __cplusplus
 }
