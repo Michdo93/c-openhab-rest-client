@@ -18,8 +18,15 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libcjson-dev cmake build-essential valgrind
       - name: Build
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: openHAB for the integration tests
         run: bash .github/openhab/start.sh
+      - name: openHAB log
+        if: failure()
+        run: tail -n 100 ~/openhab/openhab.out ~/openhab/userdata/logs/openhab.log || true
       - name: Tests
         run: ctest --test-dir build --output-on-failure
       - name: Memory check

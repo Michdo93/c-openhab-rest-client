@@ -1145,7 +1145,7 @@ OPENHAB_API cJSON* openhab_items_removeGroupMember(openhab_client_t* client, con
  *
  * :return: A response object or confirmation that the metadata was successfully added.
  */
-OPENHAB_API cJSON* openhab_items_addMetadata(openhab_client_t* client, const char* itemName, const char* namespace, const cJSON* metadata);
+OPENHAB_API cJSON* openhab_items_addMetadata(openhab_client_t* client, const char* itemName, const char* namespace_, const cJSON* metadata);
 
 /**
  * Removes metadata from an item.
@@ -1155,7 +1155,7 @@ OPENHAB_API cJSON* openhab_items_addMetadata(openhab_client_t* client, const cha
  *
  * :return: A response object or confirmation that the metadata was successfully removed.
  */
-OPENHAB_API cJSON* openhab_items_removeMetadata(openhab_client_t* client, const char* itemName, const char* namespace);
+OPENHAB_API cJSON* openhab_items_removeMetadata(openhab_client_t* client, const char* itemName, const char* namespace_);
 
 /**
  * Gets the namespaces of an item.
@@ -2450,9 +2450,9 @@ typedef struct {
     int _;
     openhab_flag summary;  /* default: False */
 } openhab_ui_getUIComponents_args;
-OPENHAB_API cJSON* openhab_ui_getUIComponents_(openhab_client_t* client, const char* namespace, openhab_ui_getUIComponents_args a);
-#define openhab_ui_getUIComponents(c, namespace, ...) \
-    openhab_ui_getUIComponents_((c), (namespace), (openhab_ui_getUIComponents_args){ ._ = 0, __VA_ARGS__ })
+OPENHAB_API cJSON* openhab_ui_getUIComponents_(openhab_client_t* client, const char* namespace_, openhab_ui_getUIComponents_args a);
+#define openhab_ui_getUIComponents(c, namespace_, ...) \
+    openhab_ui_getUIComponents_((c), (namespace_), (openhab_ui_getUIComponents_args){ ._ = 0, __VA_ARGS__ })
 
 /**
  * Add a UI component in the specified namespace.
@@ -2462,7 +2462,7 @@ OPENHAB_API cJSON* openhab_ui_getUIComponents_(openhab_client_t* client, const c
  *
  * :return: The response to the request (JSON).
  */
-OPENHAB_API cJSON* openhab_ui_addUIComponent(openhab_client_t* client, const char* namespace, const cJSON* componentData);
+OPENHAB_API cJSON* openhab_ui_addUIComponent(openhab_client_t* client, const char* namespace_, const cJSON* componentData);
 
 /**
  * Get a specific UI component in the specified namespace.
@@ -2472,7 +2472,7 @@ OPENHAB_API cJSON* openhab_ui_addUIComponent(openhab_client_t* client, const cha
  *
  * :return: The UI component (JSON).
  */
-OPENHAB_API cJSON* openhab_ui_getUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID);
+OPENHAB_API cJSON* openhab_ui_getUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID);
 
 /**
  * Update a specific UI component in the specified namespace.
@@ -2483,7 +2483,7 @@ OPENHAB_API cJSON* openhab_ui_getUIComponent(openhab_client_t* client, const cha
  *
  * :return: The response to the request (JSON).
  */
-OPENHAB_API cJSON* openhab_ui_updateUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID, const cJSON* componentData);
+OPENHAB_API cJSON* openhab_ui_updateUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID, const cJSON* componentData);
 
 /**
  * Remove a specific UI component in the specified namespace.
@@ -2493,7 +2493,7 @@ OPENHAB_API cJSON* openhab_ui_updateUIComponent(openhab_client_t* client, const 
  *
  * :return: The response to the request (JSON).
  */
-OPENHAB_API cJSON* openhab_ui_deleteUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID);
+OPENHAB_API cJSON* openhab_ui_deleteUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID);
 
 /**
  * Get all registered UI tiles.

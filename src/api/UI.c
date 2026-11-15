@@ -69,12 +69,12 @@ end_1:;
     }
 }
 
-cJSON* openhab_ui_getUIComponents_(openhab_client_t* client, const char* namespace, openhab_ui_getUIComponents_args a) {
+cJSON* openhab_ui_getUIComponents_(openhab_client_t* client, const char* namespace_, openhab_ui_getUIComponents_args a) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
     (void)a._;
-    cJSON* r = ui_getUIComponents_impl(X, py_s(X, namespace), py_arg_flag(X, a.summary, py_bool(X, 0)));
+    cJSON* r = ui_getUIComponents_impl(X, py_s(X, namespace_), py_arg_flag(X, a.summary, py_bool(X, 0)));
     return py_finish(X, r);
 }
 
@@ -133,11 +133,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_ui_addUIComponent(openhab_client_t* client, const char* namespace, const cJSON* componentData) {
+cJSON* openhab_ui_addUIComponent(openhab_client_t* client, const char* namespace_, const cJSON* componentData) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = ui_addUIComponent_impl(X, py_s(X, namespace), py_arg_json(X, componentData));
+    cJSON* r = ui_addUIComponent_impl(X, py_s(X, namespace_), py_arg_json(X, componentData));
     return py_finish(X, r);
 }
 
@@ -207,11 +207,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_ui_getUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID) {
+cJSON* openhab_ui_getUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = ui_getUIComponent_impl(X, py_s(X, namespace), py_s(X, componentUID));
+    cJSON* r = ui_getUIComponent_impl(X, py_s(X, namespace_), py_s(X, componentUID));
     return py_finish(X, r);
 }
 
@@ -281,11 +281,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_ui_updateUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID, const cJSON* componentData) {
+cJSON* openhab_ui_updateUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID, const cJSON* componentData) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = ui_updateUIComponent_impl(X, py_s(X, namespace), py_s(X, componentUID), py_arg_json(X, componentData));
+    cJSON* r = ui_updateUIComponent_impl(X, py_s(X, namespace_), py_s(X, componentUID), py_arg_json(X, componentData));
     return py_finish(X, r);
 }
 
@@ -355,11 +355,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_ui_deleteUIComponent(openhab_client_t* client, const char* namespace, const char* componentUID) {
+cJSON* openhab_ui_deleteUIComponent(openhab_client_t* client, const char* namespace_, const char* componentUID) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = ui_deleteUIComponent_impl(X, py_s(X, namespace), py_s(X, componentUID));
+    cJSON* r = ui_deleteUIComponent_impl(X, py_s(X, namespace_), py_s(X, componentUID));
     return py_finish(X, r);
 }
 

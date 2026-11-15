@@ -139,6 +139,14 @@ openhab_persistence_getItemPersistenceData(c, "Temp", .serviceID = "rrd4j",
 Optional booleans are `openhab_flag` (`OPENHAB_TRUE`, `OPENHAB_FALSE`; unset = the default of the
 Python library). Dictionaries and lists are passed as `cJSON*`.
 
+From C++ (C++20) the same calls look like this – the headers contain no C++ keywords and are
+wrapped in `extern "C"`:
+
+```cpp
+openhab_client_t* c = openhab_client_new_("http://127.0.0.1:8080", {.token = token});
+cJSON* lights = openhab_items_getItems_(c, {.tags = "Light", .fields = "name,state"});
+```
+
 ### Results
 
 Every REST function returns a `cJSON*` that you free with `cJSON_Delete()`:

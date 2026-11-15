@@ -28,6 +28,18 @@ C_KEYWORDS = {"auto", "break", "case", "char", "const", "continue", "default", "
               "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long",
               "register", "restrict", "return", "short", "signed", "sizeof", "static", "struct",
               "switch", "typedef", "union", "unsigned", "void", "volatile", "while", "errno"}
+# C++ keywords must not appear in the header, which C++ code includes as well
+CPP_KEYWORDS = {"namespace", "class", "new", "delete", "this", "template", "operator",
+                "private", "public", "protected", "virtual", "friend", "using", "typename",
+                "bool", "true", "false", "export", "try", "catch", "throw", "explicit",
+                "mutable", "and", "or", "not", "xor", "compl", "bitand", "bitor"}
+
+
+def hname(n):
+    """Parameter name in the header (C++ keywords get a trailing underscore)."""
+    return n + "_" if n in CPP_KEYWORDS else n
+
+
 NAME_TYPES = {"language": "str", "prefix": "str", "typeFilter": "str", "moduleTypeUID": "str",
               "channelTypeUID": "str", "itemType": "str", "tags": "str",
               "summary": "bool", "staticDataOnly": "bool"}
@@ -484,7 +496,7 @@ OPT_TYPES = {"str": "const char*", "bool": "openhab_flag", "int": "int", "float"
 
 def arg_conversion(name, t, required, default_code):
     """C code that turns a C argument into a cJSON value of the pool."""
-    src = name if required else f"a.{name}"
+    src = hname(name) if required else f"a.{name}"
     if t == "str":
         conv = f"py_s(X, {src})"
         return conv if required else f"({src} ? py_s(X, {src}) : {default_code})"
@@ -530,7 +542,7 @@ def method_code(m, methods):
 def public_code(m):
     out = []
     ret = "openhab_sse_t*" if m.stream else "cJSON*"
-    req = [f"{C_TYPES[t]} {n}" for n, t, d, r in m.required]
+    req = [f"{C_TYPES[t]} {hname(n)}" for n, t, d, r in m.required]
     if m.optional:
         sig = ["openhab_client_t* client"] + req + [f"{m.cname}_args a"]
         fname = m.cname + "_"
@@ -567,18 +579,20 @@ def header_code(m):
         out += [" *", f" * Optional (named) arguments: {names}"]
     out.append(" */")
     ret = "openhab_sse_t*" if m.stream else "cJSON*"
-    req = [f"{C_TYPES[t]} {n}" for n, t, d, r in m.required]
+    req = [f"{C_TYPES[t]} {hname(n)}" for n, t, d, r in m.required]
     if m.optional:
         out.append("typedef struct {")
         out.append("    int _;")
         for n, t, d, r in m.optional:
             dflt = "None" if d is None else ast.unparse(d)
+            if n in CPP_KEYWORDS:
+                raise Unsupported(f"{m.cls}.{m.name}: optional parameter {n} is a C++ keyword")
             out.append(f"    {OPT_TYPES[t]} {n};  /* default: {dflt} */")
         out.append(f"}} {m.cname}_args;")
         sig = ["openhab_client_t* client"] + req + [f"{m.cname}_args a"]
         out.append(f"OPENHAB_API {ret} {m.cname}_({', '.join(sig)});")
-        macro_args = ", ".join(["c"] + [n for n, *_ in m.required])
-        call_args = ", ".join(["(c)"] + [f"({n})" for n, *_ in m.required])
+        macro_args = ", ".join(["c"] + [hname(n) for n, *_ in m.required])
+        call_args = ", ".join(["(c)"] + [f"({hname(n)})" for n, *_ in m.required])
         out.append(f"#define {m.cname}({macro_args}, ...) \\")
         out.append(f"    {m.cname}_({call_args}, ({m.cname}_args){{ ._ = 0, __VA_ARGS__ }})")
     else:

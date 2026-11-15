@@ -813,11 +813,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_items_addMetadata(openhab_client_t* client, const char* itemName, const char* namespace, const cJSON* metadata) {
+cJSON* openhab_items_addMetadata(openhab_client_t* client, const char* itemName, const char* namespace_, const cJSON* metadata) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = items_addMetadata_impl(X, py_s(X, itemName), py_s(X, namespace), py_arg_json(X, metadata));
+    cJSON* r = items_addMetadata_impl(X, py_s(X, itemName), py_s(X, namespace_), py_arg_json(X, metadata));
     return py_finish(X, r);
 }
 
@@ -899,11 +899,11 @@ end_1:;
     }
 }
 
-cJSON* openhab_items_removeMetadata(openhab_client_t* client, const char* itemName, const char* namespace) {
+cJSON* openhab_items_removeMetadata(openhab_client_t* client, const char* itemName, const char* namespace_) {
     py_ctx X_;
     py_ctx* X = &X_;
     py_init(X, client);
-    cJSON* r = items_removeMetadata_impl(X, py_s(X, itemName), py_s(X, namespace));
+    cJSON* r = items_removeMetadata_impl(X, py_s(X, itemName), py_s(X, namespace_));
     return py_finish(X, r);
 }
 
